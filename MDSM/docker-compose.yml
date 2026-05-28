@@ -1,0 +1,91 @@
+# docker-compose.yml  (MDSM Next.js application)
+#
+# The Hyperledger Besu QBFT blockchain is managed from its own project at:
+#   C:\Users\kurat\.docker\cagent\working_directories\docker-gordon-v5\
+#       e172b026-7dee-4ad4-84bd-8052633d6025\default\
+#
+# Start the blockchain FIRST:
+#   cd <blockchain-dir> && docker compose up -d
+#
+# Then start this app (or just use `pnpm dev` during development):
+#   docker compose up -d
+#
+# The Next.js container joins the same `besu-qbft-prod` bridge network so it
+# can reach besu-node1 directly at http://172.20.0.2:8545 — no loopback
+# port-forwarding required inside Docker.
+
+version: '3.9'
+
+networks:
+  # Reference the existing blockchain network — it is managed by the blockchain
+  # docker-compose project and must already be running.
+  besu-qbft-prod:
+    name: besu-qbft-prod
+    external: true
+
+services:
+
+  # ── MDSM Next.js App ────────────────────────────────────────────────────────
+  mdsm-app:
+    build:
+      context: .
+      dockerfile: Dockerfile       # add a Dockerfile when containerising prod
+      target: runner
+    container_name: mdsm-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - besu-qbft-prod             # join blockchain net for direct RPC access
+    environment:
+      NODE_ENV:              production
+      PORT:                  "3000"
+      # ── Database ──────────────────────────────────────────────────────────
+      DATABASE_URL:          ${DATABASE_URL}
+      # ── Supabase ──────────────────────────────────────────────────────────
+      NEXT_PUBLIC_SUPABASE_URL:      ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY:     ${SUPABASE_SERVICE_ROLE_KEY}
+      SUPABASE_KYC_BUCKET:           ${SUPABASE_KYC_BUCKET}
+      # ── Blockchain ────────────────────────────────────────────────────────
+      # Use the container IP of besu-node1 (not 127.0.0.1 — that's the host
+      # loopback, which is unreachable from inside another Docker container).
+      BLOCKCHAIN_RPC_URL:    http://172.20.0.2:8545
+      BLOCKCHAIN_CHAIN_ID:   "1337"
+      BACKEND_PRIVATE_KEY:   ${BACKEND_PRIVATE_KEY}
+      TRADE_REGISTRY_ADDRESS: ${TRADE_REGISTRY_ADDRESS}
+      # ── App ───────────────────────────────────────────────────────────────
+      JWT_SECRET:            ${JWT_SECRET}
+      NEXT_PUBLIC_BASE_URL:  ${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
+    deploy:
+      resources:
+        limits:
+          cpus: '2.00'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 20s
+
+  # ── Optional: health-check sidecar for blockchain connectivity ──────────────
+  # Uncomment if you want a dedicated probe that alerts when besu-node1 stalls.
+  #
+  # blockchain-probe:
+  #   image: curlimages/curl:8
+  #   container_name: mdsm-blockchain-probe
+  #   restart: unless-stopped
+  #   networks:
+  #     - besu-qbft-prod
+  #   command: >
+  #     sh -c "while true; do
+  #       curl -sf -X POST http://172.20.0.2:8545
+  #         -H 'Content-Type: application/json'
+  #         -d '{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}'
+  #       && echo ' [besu OK]' || echo ' [besu UNREACHABLE]';
+  #       sleep 30;
+  #     done"

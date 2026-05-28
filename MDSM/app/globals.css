@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: var(--font-geist), 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: url('/background1.jpg');
+  background-size: cover;
+  background-position: center top;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Dark overlay so content stays readable over the chart image.
+   z-index: -1 puts it above the body background-image but behind
+   ALL page content — no need to bump every child to z-index: 1. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.93);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .font-mono-nums {
+    font-family: var(--font-geist-mono), 'ui-monospace', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Scrolling ticker animation */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-ticker {
+  animation: ticker-scroll 40s linear infinite;
+}
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Subtle grid background for hero */
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(34,197,94,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,197,94,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glowing green text for gains */
+.text-gain {
+  color: hsl(142 71% 45%);
+}
+.text-loss {
+  color: hsl(0 72% 55%);
+}
+
+@layer base {
+  :root {
+    /* Dark trading terminal theme */
+    --background: 220 20% 7%;
+    --foreground: 210 30% 90%;
+
+    --card: 220 18% 10%;
+    --card-foreground: 210 30% 90%;
+
+    --popover: 220 20% 9%;
+    --popover-foreground: 210 30% 90%;
+
+    /* Trading green */
+    --primary: 142 71% 45%;
+    --primary-foreground: 220 20% 7%;
+
+    --secondary: 220 18% 15%;
+    --secondary-foreground: 210 20% 75%;
+
+    --muted: 220 18% 14%;
+    --muted-foreground: 215 14% 52%;
+
+    --accent: 142 60% 40%;
+    --accent-foreground: 220 20% 7%;
+
+    /* Loss red */
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 17%;
+    --input: 220 15% 17%;
+    --ring: 142 71% 45%;
+
+    /* Chart colors: green gain, red loss, gold, cyan, purple */
+    --chart-1: 142 71% 45%;
+    --chart-2: 0 72% 55%;
+    --chart-3: 45 93% 47%;
+    --chart-4: 200 80% 60%;
+    --chart-5: 270 60% 65%;
+
+    --radius: 0.4rem;
+
+    /* Sidebar — even darker */
+    --sidebar-background: 220 22% 6%;
+    --sidebar-foreground: 210 20% 75%;
+    --sidebar-primary: 142 71% 45%;
+    --sidebar-primary-foreground: 220 20% 7%;
+    --sidebar-accent: 220 18% 12%;
+    --sidebar-accent-foreground: 210 20% 80%;
+    --sidebar-border: 220 15% 13%;
+    --sidebar-ring: 142 71% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(220 20% 7%);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(220 15% 22%);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(142 71% 35%);
+  }
+}
